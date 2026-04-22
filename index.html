@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        
+        <!-- FONT LUCU -->
+        <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        
+        /* CSS LUCU IMUT */
+        * {
+            font-family: 'Quicksand', 'Segoe UI', 'Poppins', sans-serif !important;
+        }
+        
+        .cute-title {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ffdde1 100%);
+            padding: 10px 22px;
+            border-radius: 60px;
+            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.3);
+            z-index: 1000;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255,255,255,0.6);
+            pointer-events: none;
+        }
+        
+        .cute-title h1 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .cute-title h1 i {
+            margin-right: 8px;
+        }
+        
+        .cute-title p {
+            margin: 4px 0 0;
+            font-size: 0.6rem;
+            color: #fff8e7;
+            font-weight: 500;
+        }
+        
+        .cute-sticker {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.9);
+            border-radius: 100px;
+            padding: 6px 14px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #ffb7c5;
+            pointer-events: none;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .cute-sticker span {
+            font-size: 0.7rem;
+            color: #ff6b8b;
+            font-weight: 600;
+        }
+        
+        .cute-sticker-left {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.9);
+            border-radius: 100px;
+            padding: 6px 14px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #ffb7c5;
+            pointer-events: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .cute-sticker-left span {
+            font-size: 0.7rem;
+            color: #ff6b8b;
+            font-weight: 600;
+        }
+        
+        .floating-note {
+            position: absolute;
+            top: 90px;
+            right: 15px;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 8px 14px;
+            border-radius: 25px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #5a3d4e;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            pointer-events: none;
+            border-left: 4px solid #ff6b8b;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .cute-legend {
+            position: absolute;
+            bottom: 80px;
+            left: 15px;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(5px);
+            padding: 8px 14px;
+            border-radius: 25px;
+            z-index: 1000;
+            font-size: 0.65rem;
+            border: 1px solid #ffccd5;
+            pointer-events: none;
+        }
+        
+        .cute-legend h4 {
+            margin: 0 0 5px 0;
+            color: #ff6b8b;
+            font-size: 0.7rem;
+        }
+        
+        .cute-legend .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+        }
+        
+        .cute-legend .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #db1e2a;
+            box-shadow: 0 0 0 2px #ffb7c5;
+        }
+        
+        .cute-legend .legend-dot.blue {
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+            background: #5093cf;
+            box-shadow: none;
+        }
+        
+        .leaflet-popup-content-wrapper {
+            border-radius: 20px !important;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%) !important;
+            box-shadow: 0 10px 30px rgba(255,105,180,0.2) !important;
+            border: 1px solid #ffccd5 !important;
+        }
+        
+        .leaflet-popup-tip {
+            background: #ffccd5 !important;
+        }
+        
+        .leaflet-popup-content {
+            color: #5a3d4e !important;
+            font-weight: 500 !important;
+        }
+        
+        .leaflet-control-zoom a {
+            background: #ffb7c5 !important;
+            color: white !important;
+            border-radius: 50% !important;
+            margin: 5px !important;
+            width: 32px !important;
+            height: 32px !important;
+            line-height: 32px !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+        }
+        
+        .leaflet-control-zoom a:hover {
+            background: #ff8fab !important;
+            transform: scale(1.05);
+        }
+        
+        .leaflet-control-attribution {
+            background: rgba(255, 245, 247, 0.9) !important;
+            border-radius: 20px !important;
+            padding: 2px 10px !important;
+            font-size: 0.65rem !important;
+        }
+        </style>
+        
+        <title>🌸 Peta Titik Rawan Banjir - Paal Dua, Manado 🌸</title>
+    </head>
+    <body>
+        
+        <!-- JUDUL PETA -->
+        <div class="cute-title">
+            <h1><i class="fas fa-heart" style="color:#ff6b8b;"></i> Peta Titik Rawan Banjir <i class="fas fa-cloud-rain" style="color:#80c4ff;"></i></h1>
+            <p>📍 Kecamatan Paal Dua, Kota Manado | 🌸 Jaga diri ya, jangan sampai kehujanan~</p>
+        </div>
+        
+        <!-- STIKER KANAN BAWAH -->
+        <div class="cute-sticker">
+            <i class="fas fa-umbrella" style="color:#ff6b8b;"></i>
+            <span>Hati-hati banjir ya!</span>
+            <i class="fas fa-heart" style="color:#ff6b8b; font-size:0.7rem;"></i>
+        </div>
+        
+        <!-- STIKER KIRI BAWAH -->
+        <div class="cute-sticker-left">
+            <i class="fas fa-map-marker-alt" style="color:#ff6b8b;"></i>
+            <span>Kecamatan Paal Dua</span>
+            <i class="fas fa-cloud-sun-rain" style="color:#80c4ff;"></i>
+        </div>
+        
+        <!-- FLOATING NOTE -->
+        <div class="floating-note">
+            <i class="fas fa-info-circle"></i> ✨ Klik titik merah untuk lihat info banjir ✨
+        </div>
+        
+        <!-- LEGENDA -->
+        <div class="cute-legend">
+            <h4><i class="fas fa-map-pin"></i> Legenda</h4>
+            <div class="legend-item">
+                <div class="legend-dot"></div>
+                <span>Titik Rawan Banjir 💧</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot blue"></div>
+                <span>Batas Kecamatan Paal Dua</span>
+            </div>
+        </div>
+        
+        <div id="map"></div>
+        
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="data/KECPAALDUA_1.js"></script>
+        <script src="data/TitikRawanBanjirdiKecpaalDua_2.js"></script>
+        
+        <script>
+        var map = L.map('map', {
+            zoomControl: false, 
+            maxZoom: 28, 
+            minZoom: 1
+        }).fitBounds([[1.468415813409762,124.84410027847846],[1.496981309097221,124.90054569795689]]);
+        
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        
+        function removeEmptyRowsFromPopupContent(content, feature) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var rows = tempDiv.querySelectorAll('tr');
+            for (var i = 0; i < rows.length; i++) {
+                var td = rows[i].querySelector('td.visible-with-data');
+                var key = td ? td.id : '';
+                if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                    rows[i].parentNode.removeChild(rows[i]);
+                }
+            }
+            return tempDiv.innerHTML;
+        }
+        
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() { popup.update(); }, 10);
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() { popup.setContent(tempDiv.innerHTML); popup.update(); }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    video.addEventListener('loadedmetadata', function() { popup.update(); });
+                    setTimeout(function() { popup.setContent(tempDiv.innerHTML); popup.update(); }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        
+        var zoomControl = L.control.zoom({ position: 'topleft' }).addTo(map);
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {}
+        
+        // GOOGLE HYBRID (opacity 80%)
+        map.createPane('pane_GoogleHybrid_0');
+        map.getPane('pane_GoogleHybrid_0').style.zIndex = 400;
+        
+        var layer_GoogleHybrid_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleHybrid_0',
+            opacity: 0.8,
+            attribution: '<a href="https://www.google.at/permissions/geoguidelines/attr-guide.html">Map data ©2015 Google</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        map.addLayer(layer_GoogleHybrid_0);
+        
+        // POPUP KECAMATAN (disederhanakan)
+        function pop_KECPAALDUA_1(feature, layer) {
+            var namaKec = feature.properties['NAMOBJ'] || 'Kecamatan Paal Dua';
+            var popupContent = '<div style="text-align:center; padding:5px;">' +
+                '<b>📍 ' + namaKec + '</b><br>' +
+                '<span style="font-size:11px;">Kecamatan Paal Dua, Kota Manado</span>' +
+                '</div>';
+            layer.bindPopup(popupContent, { maxHeight: 200 });
+        }
+        
+        function style_KECPAALDUA_1_0() {
+            return {
+                pane: 'pane_KECPAALDUA_1',
+                opacity: 1,
+                color: 'rgba(80,147,207,1.0)',
+                dashArray: '',
+                weight: 2.5,
+                fill: true,
+                fillOpacity: 0.65,
+                fillColor: 'rgba(80,147,207,0.4)',
+                interactive: true,
+            }
+        }
+        
+        map.createPane('pane_KECPAALDUA_1');
+        map.getPane('pane_KECPAALDUA_1').style.zIndex = 401;
+        
+        var layer_KECPAALDUA_1 = new L.geoJson(json_KECPAALDUA_1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_KECPAALDUA_1',
+            layerName: 'layer_KECPAALDUA_1',
+            pane: 'pane_KECPAALDUA_1',
+            onEachFeature: pop_KECPAALDUA_1,
+            style: style_KECPAALDUA_1_0,
+        });
+        bounds_group.addLayer(layer_KECPAALDUA_1);
+        map.addLayer(layer_KECPAALDUA_1);
+        
+        // POPUP TITIK BANJIR (DIPERBAIKI - tanpa NonNullableNeedsWrap)
+        function pop_TitikRawanBanjirdiKecpaalDua_2(feature, layer) {
+            var lokasi = feature.properties['Lokasi'] || 'Tidak tersedia';
+            var koordinat = feature.properties['Koordinat'] || 'Tidak tersedia';
+            var tinggiAir = feature.properties['Tinggi Air'] || 'Tidak tersedia';
+            var periode = feature.properties['Periode'] || 'Tidak tersedia';
+            var himbauan = feature.properties['Himbauan'] || 'Tetap waspada ya!';
+            
+            var popupContent = '<div style="min-width: 200px; padding: 5px;">' +
+                '<div style="font-weight: bold; color: #ff6b8b; margin-bottom: 8px; border-bottom: 2px solid #ffccd5; padding-bottom: 5px;">📍 INFO BANJIR</div>' +
+                '<table style="width: 100%; font-size: 12px;">' +
+                '<tr><td style="padding: 3px 0;"><strong>📍 Lokasi:</strong></td><td style="padding: 3px 0;">' + lokasi + '</td></tr>' +
+                '<tr><td style="padding: 3px 0;"><strong>🗺️ Koordinat:</strong></td><td style="padding: 3px 0;">' + koordinat + '</td></tr>' +
+                '<tr><td style="padding: 3px 0;"><strong>💧 Tinggi Air:</strong></td><td style="padding: 3px 0;">' + tinggiAir + '</td></tr>' +
+                '<tr><td style="padding: 3px 0;"><strong>📅 Periode:</strong></td><td style="padding: 3px 0;">' + periode + '</td></tr>' +
+                '<tr><td style="padding: 3px 0;"><strong>📝 Himbauan:</strong></td><td style="padding: 3px 0;">' + himbauan + '</td></tr>' +
+                '</table>' +
+                '<div style="margin-top: 8px; font-size: 10px; color: #ff6b8b; text-align: center;">🌸 Tetap waspada dan jaga kebersihan! 🌸</div>' +
+                '</div>';
+            
+            layer.bindPopup(popupContent, { maxHeight: 300, maxWidth: 280 });
+        }
+        
+        // STYLE MARKER TITIK BANJIR
+        function style_TitikRawanBanjirdiKecpaalDua_2_0_cute(feature) {
+            return {
+                radius: 14,
+                opacity: 1,
+                color: 'rgba(255, 180, 180, 1.0)',
+                weight: 3,
+                fill: true,
+                fillOpacity: 0.9,
+                fillColor: 'rgba(219,30,42,1.0)',
+                interactive: true,
+            }
+        }
+        
+        map.createPane('pane_TitikRawanBanjirdiKecpaalDua_2');
+        map.getPane('pane_TitikRawanBanjirdiKecpaalDua_2').style.zIndex = 402;
+        
+        var layer_TitikRawanBanjirdiKecpaalDua_2 = new L.geoJson(json_TitikRawanBanjirdiKecpaalDua_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_TitikRawanBanjirdiKecpaalDua_2',
+            layerName: 'layer_TitikRawanBanjirdiKecpaalDua_2',
+            pane: 'pane_TitikRawanBanjirdiKecpaalDua_2',
+            onEachFeature: pop_TitikRawanBanjirdiKecpaalDua_2,
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, style_TitikRawanBanjirdiKecpaalDua_2_0_cute(feature));
+            },
+        });
+        bounds_group.addLayer(layer_TitikRawanBanjirdiKecpaalDua_2);
+        map.addLayer(layer_TitikRawanBanjirdiKecpaalDua_2);
+        
+        // EFEK HOVER MARKER
+        layer_TitikRawanBanjirdiKecpaalDua_2.eachLayer(function(layer) {
+            layer.on('mouseover', function(e) {
+                this.setStyle({
+                    radius: 18,
+                    fillOpacity: 1,
+                    color: '#ffd700',
+                    weight: 4
+                });
+            });
+            layer.on('mouseout', function(e) {
+                this.setStyle(style_TitikRawanBanjirdiKecpaalDua_2_0_cute(this.feature));
+            });
+        });
+        
+        setBounds();
+        console.log('🌸 Peta Titik Rawan Banjir Paal Dua siap digunakan! 🌸');
+        </script>        
+    </body>
+</html>
